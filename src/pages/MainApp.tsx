@@ -1307,7 +1307,6 @@ export const MainApp = () => {
                     disabled={isLoading}
                     variant="outlined"
                     size="small"
-                    helperText={isLoading ? "API'ye gönderiliyor..." : ""}
                   />
                   <IconButton 
                     color="primary" 
