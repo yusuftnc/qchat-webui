@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { 
   Box, IconButton, Avatar, Menu, MenuItem, ListItemIcon, ListItemText, 
   Typography, Grid, Button, TextField, Paper, FormControl, Select, 
@@ -221,11 +221,14 @@ export const MainApp = () => {
     }
   }, []); // Sadece component mount'ta çalışır
 
-  // Auto-scroll for all tabs
-  useEffect(() => {
+  // Auto-scroll for all tabs - DOM güncellemesi sonrası çalışması için useLayoutEffect kullanıyoruz
+  useLayoutEffect(() => {
     if (contentContainerRef.current) {
       const container = contentContainerRef.current;
-      container.scrollTop = container.scrollHeight;
+      // DOM güncellemesi tamamlandıktan hemen sonra scroll yap
+      setTimeout(() => {
+        container.scrollTop = container.scrollHeight;
+      }, 0);
     }
   }, [conversations, onlineConversations, qnaItems, documents, activeTab, activeConversationId, activeOnlineConversationId, pendingQuestion]);
 
@@ -282,6 +285,12 @@ export const MainApp = () => {
                 }
               : conv
           ));
+          // Stream sırasında auto-scroll
+          setTimeout(() => {
+            if (contentContainerRef.current) {
+              contentContainerRef.current.scrollTop = contentContainerRef.current.scrollHeight;
+            }
+          }, 10);
         }
       );
     } catch (error) {
@@ -373,6 +382,12 @@ export const MainApp = () => {
                     }
                   : conv
               ));
+              // Stream sırasında auto-scroll
+              setTimeout(() => {
+                if (contentContainerRef.current) {
+                  contentContainerRef.current.scrollTop = contentContainerRef.current.scrollHeight;
+                }
+              }, 10);
             } else {
               console.warn('⚠️ No content found in chunk:', chunk);
             }
@@ -446,6 +461,12 @@ export const MainApp = () => {
               ? { ...item, answer: (item.answer || '') + (chunk.response || chunk.message?.content || '') }
               : item
           ));
+          // Stream sırasında auto-scroll
+          setTimeout(() => {
+            if (contentContainerRef.current) {
+              contentContainerRef.current.scrollTop = contentContainerRef.current.scrollHeight;
+            }
+          }, 10);
         }
       );
     } catch (error) {
@@ -590,11 +611,12 @@ export const MainApp = () => {
       <Grid container sx={{ 
         flexGrow: 1, 
         width: '100vw',
+        height: '100vh',  // Explicit height ekle
         overflow: 'hidden'  // Grid level scroll'u da kapat
       }}>
         
         {/* Sol Sidebar - Chat Geçmişi / QnA Geçmişi */}
-        <Grid size={2.5} sx={{ borderRight: 1, borderColor: 'divider', backgroundColor: 'grey.50' }}>
+        <Grid size={2.5} sx={{ height: '100vh', borderRight: 1, borderColor: 'divider', backgroundColor: 'grey.50' }}>
           <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             
             {/* Logo Header */}
@@ -747,7 +769,7 @@ export const MainApp = () => {
         </Grid>
 
         {/* Orta Alan - Chat/QnA Interface */}
-        <Grid size={7}>
+        <Grid size={7} sx={{ height: '100vh' }}>
           <Box sx={{ 
             height: '100%',
             display: 'flex', 
@@ -1305,7 +1327,7 @@ export const MainApp = () => {
         </Grid>
 
         {/* Sağ Panel - User Profile */}
-        <Grid size={2.5} sx={{ borderLeft: 1, borderColor: 'divider', backgroundColor: 'grey.50' }}>
+        <Grid size={2.5} sx={{ height: '100vh', borderLeft: 1, borderColor: 'divider', backgroundColor: 'grey.50' }}>
           <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             
             {/* User Header */}
