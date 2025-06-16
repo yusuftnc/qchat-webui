@@ -611,12 +611,12 @@ export const MainApp = () => {
       <Grid container sx={{ 
         flexGrow: 1, 
         width: '100vw',
-        height: '100vh',  // Explicit height ekle
+        height: '100%',  // Parent'tan height al
         overflow: 'hidden'  // Grid level scroll'u da kapat
       }}>
         
         {/* Sol Sidebar - Chat Geçmişi / QnA Geçmişi */}
-        <Grid size={2.5} sx={{ height: '100vh', borderRight: 1, borderColor: 'divider', backgroundColor: 'grey.50' }}>
+        <Grid size={2.5} sx={{ height: '100%', borderRight: 1, borderColor: 'divider', backgroundColor: 'grey.50' }}>
           <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             
             {/* Logo Header */}
@@ -679,7 +679,6 @@ export const MainApp = () => {
               overflow: 'auto', 
               p: 1,
               minHeight: 0,  // Flex child için gerekli
-              maxHeight: 'calc(100vh - 180px)', // Button + divider + footer alanı hariç
               // Custom Scrollbar Styling
               '&::-webkit-scrollbar': {
                 width: '6px',
@@ -769,7 +768,7 @@ export const MainApp = () => {
         </Grid>
 
         {/* Orta Alan - Chat/QnA Interface */}
-        <Grid size={7} sx={{ height: '100vh' }}>
+        <Grid size={7} sx={{ height: '100%' }}>
           <Box sx={{ 
             height: '100%',
             display: 'flex', 
@@ -783,30 +782,36 @@ export const MainApp = () => {
                 value={activeTab} 
                 onChange={(_, newValue) => setActiveTab(newValue)}
                 aria-label="QnA Chat tabs"
+                sx={{
+                  '& .MuiTab-root': {
+                    minHeight: 64,
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 1
+                  }
+                }}
               >
                 <Tab 
                   icon={<ChatIcon />} 
                   label="Yerel Sohbet" 
                   iconPosition="start"
-                  sx={{ minHeight: 64 }}
                 />
                 <Tab 
                   icon={<ChatIcon />} 
                   label="Çevrimiçi Sohbet" 
                   iconPosition="start"
-                  sx={{ minHeight: 64 }}
                 />
                 <Tab 
                   icon={<QuestionAnswer />} 
                   label="Soru Cevap" 
                   iconPosition="start"
-                  sx={{ minHeight: 64 }}
                 />
                 <Tab 
                   icon={<Book />} 
                   label="Belge Kitaplığı" 
                   iconPosition="start"
-                  sx={{ minHeight: 64 }}
                 />
               </Tabs>
             </Box>
@@ -1217,9 +1222,11 @@ export const MainApp = () => {
             {/* Input Area */}
             <Box sx={{ 
               p: 2, 
+              pb: 3,  // Alt kısımda daha fazla padding
               borderTop: 1, 
               borderColor: 'divider',
-              backgroundColor: 'background.paper'
+              backgroundColor: 'background.paper',
+              flexShrink: 0  // Input area'nın küçülmesini engelle
             }}>
               {activeTab === 3 ? (
                 // Belge Kitaplığı için dosya yükleme alanı
@@ -1327,7 +1334,7 @@ export const MainApp = () => {
         </Grid>
 
         {/* Sağ Panel - User Profile */}
-        <Grid size={2.5} sx={{ height: '100vh', borderLeft: 1, borderColor: 'divider', backgroundColor: 'grey.50' }}>
+        <Grid size={2.5} sx={{ height: '100%', borderLeft: 1, borderColor: 'divider', backgroundColor: 'grey.50' }}>
           <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             
             {/* User Header */}
