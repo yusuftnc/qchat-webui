@@ -1,0 +1,24 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Main chat bubble -->
+  <rect x="8" y="12" width="40" height="28" rx="14" fill="#1976d2" stroke="#1565c0" stroke-width="2"/>
+  
+  <!-- Chat bubble tail -->
+  <path d="M20 40 L16 48 L28 40" fill="#1976d2"/>
+  
+  <!-- Letter Q in the center -->
+  <circle cx="28" cy="26" r="8" fill="none" stroke="white" stroke-width="3"/>
+  <line x1="33" y1="31" x2="36" y2="34" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Small secondary bubble for "Chat" concept -->
+  <circle cx="45" cy="20" r="6" fill="#42a5f5" stroke="#1976d2" stroke-width="1"/>
+  <circle cx="45" cy="20" r="2" fill="white"/>
+  
+  <!-- Subtle gradient overlay -->
+  <defs>
+    <linearGradient id="bubbleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2196f3;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#1976d2;stop-opacity:0.1" />
+    </linearGradient>
+  </defs>
+  <rect x="8" y="12" width="40" height="28" rx="14" fill="url(#bubbleGradient)"/>
+</svg> 
