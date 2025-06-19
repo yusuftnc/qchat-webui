@@ -288,79 +288,101 @@ export async function sendOpenAIMessageStream(
   model: string,
   onChunk: (data: any) => void
 ) {
-  console.log('🚀 OpenAI Stream Request:', {
-    url: `${API_BASE_URL}/qchat-api/v1/openai/chat`,
-    model,
-    messages,
-    messageCount: messages.length
-  });
-
-  const response = await fetch(`${API_BASE_URL}/qchat-api/v1/openai/chat`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-API-KEY': API_KEY,
-    },
-    body: JSON.stringify({
+  try {
+    console.log('🚀 OpenAI Stream Request:', {
+      url: `${API_BASE_URL}/qchat-api/v1/openai/chat`,
       model,
       messages,
-    }),
-  });
+      messageCount: messages.length
+    });
 
-  console.log('🔍 OpenAI Response Status:', response.status, response.statusText);
+    const response = await fetch(`${API_BASE_URL}/qchat-api/v1/openai/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': API_KEY,
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+      }),
+      // 10 saniye timeout ekle
+      signal: AbortSignal.timeout(10000),
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('❌ OpenAI API Error Response:', errorText);
-    throw new Error(`API Error: ${response.status} - ${errorText}`);
-  }
+    console.log('🔍 OpenAI Response Status:', response.status, response.statusText);
 
-  if (!response.body) throw new Error('No response body');
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  let chunkCount = 0;
-
-  console.log('📡 Starting to read OpenAI stream...');
-
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) {
-      console.log('✅ OpenAI Stream completed, total chunks:', chunkCount);
-      break;
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ OpenAI API Error Response:', errorText);
+      
+      // JSON formatındaki hata mesajını parse etmeye çalış
+      let errorMessage = `API Error: ${response.status}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        if (errorJson.response?.message) {
+          errorMessage = errorJson.response.message;
+        } else if (errorJson.message) {
+          errorMessage = errorJson.message;
+        }
+      } catch (e) {
+        // JSON parse edilemezse raw text kullan
+        errorMessage = errorText;
+      }
+      
+      throw new Error(errorMessage);
     }
-    
-    buffer += decoder.decode(value, { stream: true });
-    console.log('📦 Raw chunk received:', buffer.slice(-100)); // Son 100 karakter
 
-    let lines = buffer.split('\n');
-    buffer = lines.pop()!;
+    if (!response.body) throw new Error('No response body');
 
-    for (const line of lines) {
-      if (line.trim()) {
-        chunkCount++;
-        console.log(`🔍 Processing line ${chunkCount}:`, line);
-        try {
-          const json = JSON.parse(line);
-          console.log('✅ Parsed JSON:', json);
-          onChunk(json);
-        } catch (e) {
-          console.warn('⚠️ JSON parse failed for line:', line, 'Error:', e);
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let chunkCount = 0;
+
+    console.log('📡 Starting to read OpenAI stream...');
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) {
+        console.log('✅ OpenAI Stream completed, total chunks:', chunkCount);
+        break;
+      }
+      
+      buffer += decoder.decode(value, { stream: true });
+      console.log('📦 Raw chunk received:', buffer.slice(-100)); // Son 100 karakter
+
+      let lines = buffer.split('\n');
+      buffer = lines.pop()!;
+
+      for (const line of lines) {
+        if (line.trim()) {
+          chunkCount++;
+          console.log(`🔍 Processing line ${chunkCount}:`, line);
+          try {
+            const json = JSON.parse(line);
+            console.log('✅ Parsed JSON:', json);
+            onChunk(json);
+          } catch (e) {
+            console.warn('⚠️ JSON parse failed for line:', line, 'Error:', e);
+          }
         }
       }
     }
-  }
-  
-  if (buffer.trim()) {
-    console.log('🔍 Final buffer:', buffer);
-    try {
-      const json = JSON.parse(buffer);
-      console.log('✅ Final JSON:', json);
-      onChunk(json);
-    } catch (e) {
-      console.warn('⚠️ Final buffer parse failed:', buffer, 'Error:', e);
+    
+    if (buffer.trim()) {
+      console.log('🔍 Final buffer:', buffer);
+      try {
+        const json = JSON.parse(buffer);
+        console.log('✅ Final JSON:', json);
+        onChunk(json);
+      } catch (e) {
+        console.warn('⚠️ Final buffer parse failed:', buffer, 'Error:', e);
+      }
     }
+  } catch (error: any) {
+    console.error('❌ OpenAI Stream Error:', error);
+    throw error;
   }
 }
 

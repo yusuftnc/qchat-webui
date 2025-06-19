@@ -358,67 +358,59 @@ export const MainApp = () => {
       // Yeni mesajı history'ye ekle
       const allMessages = [...chatHistory, { role: 'user' as const, content: currentMsgToSend }];
 
-      console.log('🚀 Trying stream first...');
-      try {
-        await sendOpenAIMessageStream(
-          allMessages,
-          selectedOpenAIModel,
-          (chunk) => {
-            console.log('🎯 Received chunk in MainApp:', chunk);
-            
-            const contentToAdd = chunk.content || chunk.response || chunk.message?.content || chunk.choices?.[0]?.delta?.content || '';
-            console.log('📝 Content to add:', contentToAdd);
-            
-            if (contentToAdd) {
-              setOnlineConversations(prev => prev.map(conv =>
-                conv.id === activeOnlineConversationId
-                  ? {
-                      ...conv,
-                      messages: conv.messages.map(msg =>
-                        msg.id === aiMessageId
-                          ? { ...msg, content: (msg.content || '') + contentToAdd }
-                          : msg
-                      )
-                    }
-                  : conv
-              ));
-              // Stream sırasında auto-scroll
-              setTimeout(() => {
-                if (contentContainerRef.current) {
-                  contentContainerRef.current.scrollTop = contentContainerRef.current.scrollHeight;
-                }
-              }, 10);
-            } else {
-              console.warn('⚠️ No content found in chunk:', chunk);
-            }
-          }
-        );
-      } catch (streamError) {
-        console.error('❌ Stream failed, trying non-stream:', streamError);
-        
-        // Stream başarısız olursa non-stream dene
-        const response = await sendOpenAIMessage(allMessages, selectedOpenAIModel);
-        setOnlineConversations(prev => prev.map(conv =>
-          conv.id === activeOnlineConversationId
-            ? {
-                ...conv,
-                messages: conv.messages.map(msg =>
-                  msg.id === aiMessageId
-                    ? { ...msg, content: response.message }
-                    : msg
-                )
+      console.log('🚀 Sending OpenAI message...');
+      await sendOpenAIMessageStream(
+        allMessages,
+        selectedOpenAIModel,
+        (chunk) => {
+          console.log('🎯 Received chunk in MainApp:', chunk);
+          
+          const contentToAdd = chunk.content || chunk.response || chunk.message?.content || chunk.choices?.[0]?.delta?.content || '';
+          console.log('📝 Content to add:', contentToAdd);
+          
+          if (contentToAdd) {
+            setOnlineConversations(prev => prev.map(conv =>
+              conv.id === activeOnlineConversationId
+                ? {
+                    ...conv,
+                    messages: conv.messages.map(msg =>
+                      msg.id === aiMessageId
+                        ? { ...msg, content: (msg.content || '') + contentToAdd }
+                        : msg
+                    )
+                  }
+                : conv
+            ));
+            // Stream sırasında auto-scroll
+            setTimeout(() => {
+              if (contentContainerRef.current) {
+                contentContainerRef.current.scrollTop = contentContainerRef.current.scrollHeight;
               }
-            : conv
-        ));
+            }, 10);
+          } else {
+            console.warn('⚠️ No content found in chunk:', chunk);
+          }
+        }
+      );
+    } catch (error: any) {
+      // Backend'den gelen hata mesajını kullan
+      let errorMessage = 'Bilinmeyen hata';
+      
+      if (error.response?.data?.response?.message) {
+        // Backend'den gelen spesifik mesaj
+        errorMessage = error.response.data.response.message;
+      } else if (error.message) {
+        // Genel hata mesajı
+        errorMessage = error.message;
       }
-    } catch (error) {
+      
       setOnlineConversations(prev => prev.map(conv =>
         conv.id === activeOnlineConversationId
           ? {
               ...conv,
               messages: conv.messages.map(msg =>
                 msg.id === aiMessageId
-                  ? { ...msg, content: `❌ OpenAI API Hatası: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}` }
+                  ? { ...msg, content: `❌ ${errorMessage}` }
                   : msg
               )
             }
